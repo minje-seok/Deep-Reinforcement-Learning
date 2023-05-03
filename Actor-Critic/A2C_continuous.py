@@ -28,16 +28,17 @@ class ActorNetwork(nn.Module):
         self.afc2 = nn.Linear(64, 128)
         self.afc3 = nn.Linear(128, 64)
         self.afc4 = nn.Linear(64, 32)
-        self.policy = nn.Linear(32, action_dim)
+        self.mean = nn.Linear(32, 1)
+        self.std = nn.Linear(32, 1)
 
     def forward(self, state):
         x = F.relu(self.afc1(state))
         x = F.relu(self.afc2(x))
         x = F.relu(self.afc3(x))
         x = F.relu(self.afc4(x))
-        x = self.policy(x)
-        prob = F.softmax(x, dim=-1)
-        return prob
+        mean = self.mean(x)
+        std = torch.exp(self.std(x))
+        return torch.distributions.Normal(mean, std)
 
 
 class CriticNetwork(nn.Module):
@@ -65,7 +66,6 @@ class A2C(nn.Module):
         super(A2C, self).__init__()
         self.actor = ActorNetwork(state_dim, action_dim).to(device)
         self.critic = CriticNetwork(state_dim).to(device)
-
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=lr)
 
@@ -95,10 +95,9 @@ class A2C(nn.Module):
         return s_batch, a_batch, r_batch, s_prime_batch, done_batch
 
     def select_action(self, state):
-        probs = self.actor(state)
-        dist = Categorical(probs)
+        dist = self.actor(state)
         action = dist.sample()
-        return action.item()
+        return action
 
     def train_net(self):
         s, a, r, s_prime, done = self.make_batch()
@@ -114,8 +113,7 @@ class A2C(nn.Module):
         critic_loss = F.smooth_l1_loss(returns, values) # advantages.pow(2).mean()
 
         # Actor loss
-        prob = self.actor(s)
-        dist = Categorical(prob)
+        dist = self.actor(s)
         log_prob = dist.log_prob(a)
         actor_loss = -(log_prob * advantages.detach()).mean()
 
