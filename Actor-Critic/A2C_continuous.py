@@ -106,7 +106,7 @@ class A2C(nn.Module):
         self.critic_optimizer.zero_grad()
 
         # Critic loss
-        values = self.critic(s) 
+        values = self.critic(s)
         next_values = self.critic(s_prime).detach()
         returns = r + gamma * next_values * (1 - done) # target
         advantages = returns.detach() - values
