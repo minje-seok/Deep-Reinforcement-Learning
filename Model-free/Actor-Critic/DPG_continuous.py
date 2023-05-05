@@ -166,10 +166,10 @@ def main():
     plt.figure(figsize=(10,6))
     plt.plot(scores)
     plt.plot(pd.Series(scores).rolling(100).mean())
-    plt.title('A2C_deterministic')
+    plt.title('DPG_continuous')
     plt.xlabel('# of episodes')
     plt.ylabel('score')
-    plt.savefig('A2C_deterministic.png')
+    plt.savefig('DPG_continuous.png')
 
     # torch.save(model.state_dict(), 'A2C_discrete.pth')
 
