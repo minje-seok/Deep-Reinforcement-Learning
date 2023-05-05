@@ -79,7 +79,7 @@ class A2C(nn.Module):
         for transition in self.data:
             s, a, r, s_prime, done = transition
             s_lst.append(s)
-            a_lst.append([a])
+            a_lst.append(a)
             r_lst.append([r])
             s_prime_lst.append(s_prime)
             done_mask = 0.0 if done else 1.0
@@ -108,9 +108,10 @@ class A2C(nn.Module):
         # Critic loss
         values = self.critic(s)
         next_values = self.critic(s_prime).detach()
-        returns = r + gamma * next_values * (1 - done) # target
-        advantages = returns.detach() - values
-        critic_loss = F.smooth_l1_loss(returns, values) # advantages.pow(2).mean()
+        target_values = r + gamma * next_values * (1 - done) # target
+        critic_loss = F.smooth_l1_loss(target_values, values) # advantages.pow(2).mean()
+
+        advantages = target_values - values
 
         # Actor loss
         dist = self.actor(s)
@@ -125,9 +126,9 @@ class A2C(nn.Module):
 
 
 def main():
-    env = gym.make('MountainCar-v0', render_mode="human")
-    # print(env.observation_space.shape[0], env.action_space.n)
-    model = A2C(env.observation_space.shape[0], env.action_space.n)
+    env = gym.make('MountainCarContinuous-v0', render_mode="human")
+    # print(env.observation_space.shape[0], env.action_space)
+    model = A2C(env.observation_space.shape[0], 1)
     print_interval = 20
     print_score = 0.0
     scores = []
@@ -140,8 +141,11 @@ def main():
         while not done:
             for t in range(iteration):
                 a = model.select_action(torch.from_numpy(s).float().to(device))
+                a = a.cpu().detach().numpy()
                 s_prime, r, done, _, info = env.step(a)
                 model.put_data((s, a, r, s_prime, done))
+                # print(type(s), type(a), type(r), type(s_prime), type(done))
+                # print(s, a, r, s_prime, done)
                 s = s_prime
 
                 print_score += r
@@ -166,12 +170,12 @@ def main():
     plt.figure(figsize=(10,6))
     plt.plot(scores)
     plt.plot(pd.Series(scores).rolling(100).mean())
-    plt.title('A2C_discrete')
+    plt.title('A2C_continuous')
     plt.xlabel('# of episodes')
     plt.ylabel('score')
-    plt.savefig('A2C_discrete.png')
+    plt.savefig('A2C_continuous.png')
 
-    # torch.save(model.state_dict(), 'A2C_discrete.pth')
+    # torch.save(model.state_dict(), 'A2C_continuous.pth')
 
 if __name__ == '__main__':
     main()
