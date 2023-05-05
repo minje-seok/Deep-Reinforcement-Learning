@@ -109,9 +109,10 @@ class A2C(nn.Module):
         # Critic loss
         values = self.critic(s)
         next_values = self.critic(s_prime).detach()
-        returns = r + gamma * next_values * (1 - done) # target
-        advantages = returns.detach() - values
-        critic_loss = F.smooth_l1_loss(returns, values) # advantages.pow(2).mean()
+        target_values = r + gamma * next_values * (1 - done) # Q target in A2C
+        critic_loss = F.smooth_l1_loss(target_values, values) # advantages.pow(2).mean()
+
+        advantages = target_values - values
 
         # Actor loss
         prob = self.actor(s)
@@ -144,6 +145,8 @@ def main():
                 a = model.select_action(torch.from_numpy(s).float().to(device))
                 s_prime, r, done, _, info = env.step(a)
                 model.put_data((s, a, r, s_prime, done))
+                # print(type(s), type(a), type(r), type(s_prime), type(done))
+                # print(s, a, r, s_prime, done)
                 s = s_prime
 
                 print_score += r
