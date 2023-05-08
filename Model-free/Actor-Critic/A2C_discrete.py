@@ -15,6 +15,7 @@ lr = 0.0001
 gamma = 0.99
 iteration = 200
 EPISODES = 10000
+batch_size = 64
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(torch.cuda.is_available())
@@ -156,8 +157,9 @@ def main():
                 if done:
                     print(step)
                     break
-
-                model.train_net()
+                    
+                if step % batch_size == 0:
+                    model.train_net()
 
         if n_epi % print_interval == 0 and n_epi != 0:
             print("# of episode :{}, avg score : {:.1f}".format(n_epi, print_score / print_interval))
