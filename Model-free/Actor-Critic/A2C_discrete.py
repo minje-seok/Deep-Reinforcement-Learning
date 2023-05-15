@@ -157,7 +157,7 @@ def main():
                 if done:
                     print(step)
                     break
-                    
+
                 if step % batch_size == 0:
                     model.train_net()
 

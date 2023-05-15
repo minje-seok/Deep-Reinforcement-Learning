@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 import math
 import random
 import numpy as np
@@ -117,7 +117,7 @@ def learn():
 
 def train_dqn():
     for e in range(1, EPISODES + 1):
-        state = env.reset() # state = [-0.01508306 -0.04199532  0.00379785  0.01508063], <class 'numpy.ndarray'>
+        state, _ = env.reset() # state = [-0.01508306 -0.04199532  0.00379785  0.01508063], <class 'numpy.ndarray'>
         steps = 0
         while True:
             state = torch.FloatTensor(state) # tensorize state
